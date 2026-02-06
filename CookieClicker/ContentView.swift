@@ -1,15 +1,8 @@
-//
-//  ContentView.swift
-//  CookieClicker
-//
-//  Created by Rens Aarts on 05/02/2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    @State var cookiesPerSecond: Int = 0
-    @State var cookies: Int = 0
+    @StateObject private var game = GameState()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -18,28 +11,50 @@ struct ContentView: View {
                 Text("Cookie Clicker!")
                 Spacer()
                 Button(action: {
-                    cookies += 1
+                    game.tapCookie()
                 }, label: {
                     Image("Cookie")
                         .resizable(resizingMode: .stretch)
                         .aspectRatio(contentMode: .fit)
                 })
-                Text("Total Cookies: " + String(cookies))
+                Text("Total Cookies: " + String(game.cookies))
                     .foregroundStyle(Color.white)
                     .fontWeight(.heavy)
                 Spacer()
                 HStack {
                     NavigationLink("Credits") {
                         CreditsView()
-                    }.padding().background(Color.blue).foregroundStyle(Color.white).cornerRadius(10).fontWeight(Font.Weight.heavy)
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundStyle(Color.white)
+                    .cornerRadius(10)
+                    .fontWeight(Font.Weight.heavy)
+
                     NavigationLink("Shop") {
-                        ShopView(cookiesPerSecond: $cookiesPerSecond, cookies: $cookies)
-                    }.padding().background(Color.blue).foregroundStyle(Color.white).cornerRadius(10).fontWeight(Font.Weight.heavy)
+                        ShopView()
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundStyle(Color.white)
+                    .cornerRadius(10)
+                    .fontWeight(Font.Weight.heavy)
                 }
             }
             .padding()
             .background(Color.gray)
             .navigationTitle("Cookie Clicker")
+        }
+        .environmentObject(game)
+        .onChange(of: scenePhase, initial: true) { _, newPhase in
+            switch newPhase {
+            case .active:
+                game.startTicker()
+            case .inactive, .background:
+                game.stopTicker()
+            @unknown default:
+                break
+            }
         }
     }
 }
